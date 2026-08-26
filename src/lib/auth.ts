@@ -22,8 +22,11 @@ export type Session = {
   email: string;
 };
 
-const DEV_EMAIL = process.env.DEV_USER_EMAIL ?? "you@localhost";
-const DEV_ORG = process.env.DEV_ORG_NAME ?? "My workspace";
+// `||` rather than `??`: a hosting dashboard will happily store a variable with
+// a blank value, and `??` only falls back on undefined. That produced a
+// workspace named "" with a user whose email was "" on the first deploy.
+const DEV_EMAIL = process.env.DEV_USER_EMAIL?.trim() || "you@localhost";
+const DEV_ORG = process.env.DEV_ORG_NAME?.trim() || "My workspace";
 
 let bootstrapped: Session | null = null;
 

@@ -21,6 +21,18 @@ function optional(name: string): string | undefined {
   return value && value.trim() !== "" ? value : undefined;
 }
 
+/**
+ * Fall back on an empty value, not just an absent one.
+ *
+ * Hosting dashboards let you create a variable and leave it blank, so
+ * `process.env.X ?? fallback` silently yields "" instead of the default — and a
+ * blank APP_URL builds a broken OAuth redirect URI that fails at the callback
+ * with nothing pointing back at the real cause.
+ */
+function withDefault(name: string, fallback: string): string {
+  return optional(name) ?? fallback;
+}
+
 export const env = {
   get DATABASE_URL() {
     return required("DATABASE_URL");
@@ -30,7 +42,7 @@ export const env = {
     return required("ENCRYPTION_KEY");
   },
   get APP_URL() {
-    return process.env.APP_URL ?? "http://localhost:3000";
+    return withDefault("APP_URL", "http://localhost:3000").replace(/\/+$/, "");
   },
   /** Shared secret the external cron must present. */
   get CRON_SECRET() {
@@ -53,7 +65,7 @@ export const env = {
     return optional("META_APP_SECRET");
   },
   get META_API_VERSION() {
-    return process.env.META_API_VERSION ?? "v21.0";
+    return withDefault("META_API_VERSION", "v21.0");
   },
 
   // --- Supabase Storage ---
@@ -64,7 +76,7 @@ export const env = {
     return optional("SUPABASE_SERVICE_KEY");
   },
   get SUPABASE_BUCKET() {
-    return process.env.SUPABASE_BUCKET ?? "media";
+    return withDefault("SUPABASE_BUCKET", "media");
   },
 } as const;
 

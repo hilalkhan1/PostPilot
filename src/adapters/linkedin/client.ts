@@ -8,7 +8,8 @@ export const LINKEDIN_OAUTH = "https://www.linkedin.com/oauth/v2";
  * roughly a year. Pin it in the environment so an expiry is a config change,
  * not a code change.
  */
-export const LINKEDIN_VERSION = process.env.LINKEDIN_API_VERSION ?? "202606";
+export const LINKEDIN_VERSION =
+  process.env.LINKEDIN_API_VERSION?.trim() || "202606";
 
 function restHeaders(accessToken: string): Record<string, string> {
   return {
