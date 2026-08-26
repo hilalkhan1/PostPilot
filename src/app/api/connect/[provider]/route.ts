@@ -4,6 +4,7 @@ import type { Provider } from "@/db/schema";
 import { isProviderConfigured } from "@/lib/env";
 import {
   createOAuthState,
+  getSession,
   redirectUriFor,
   setOAuthStateCookie,
 } from "@/lib/auth";
@@ -19,6 +20,13 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> },
 ) {
   const { provider } = await params;
+
+  // Nothing else guards this route now that the shared-password middleware is
+  // gone, and an OAuth flow has to belong to somebody.
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.redirect(new URL("/sign-in", request.nextUrl.origin));
+  }
 
   if (!SUPPORTED.includes(provider as Provider)) {
     return NextResponse.json(
