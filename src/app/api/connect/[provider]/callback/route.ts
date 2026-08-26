@@ -5,8 +5,9 @@ import { platformConnections, socialAccounts, type Provider } from "@/db/schema"
 import { providerFor } from "@/adapters";
 import { seal } from "@/lib/crypto";
 import {
-  consumeOAuthState,
+  clearOAuthStateCookie,
   getSession,
+  readOAuthState,
   redirectUriFor,
   verifyOAuthState,
 } from "@/lib/auth";
@@ -14,10 +15,17 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function back(origin: string, params: Record<string, string>) {
+/** Every exit from this route clears the state cookie — it is single-use. */
+function back(
+  origin: string,
+  provider: string,
+  params: Record<string, string>,
+) {
   const url = new URL("/", origin);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-  return NextResponse.redirect(url);
+  const response = NextResponse.redirect(url);
+  clearOAuthStateCookie(response, provider);
+  return response;
 }
 
 export async function GET(
@@ -31,7 +39,7 @@ export async function GET(
   // The user pressed Cancel, or the provider refused outright.
   const oauthError = query.get("error");
   if (oauthError) {
-    return back(origin, {
+    return back(origin, provider, {
       error: "connect_declined",
       detail: query.get("error_description") ?? oauthError,
     });
@@ -39,7 +47,7 @@ export async function GET(
 
   const code = query.get("code");
   const state = query.get("state");
-  const stored = await consumeOAuthState();
+  const stored = readOAuthState(request, provider);
 
   // Three checks, all required: the state must be present, must match the one
   // we issued, and must carry our signature. Skipping any of them allows an
@@ -51,7 +59,12 @@ export async function GET(
     state !== stored ||
     !verifyOAuthState(state, provider)
   ) {
-    return back(origin, { error: "invalid_state" });
+    return back(origin, provider, {
+      error: "invalid_state",
+      detail: !stored
+        ? "The sign-in took too long, or cookies were blocked. Try connecting again."
+        : "The security check did not match. Start the connection again.",
+    });
   }
 
   try {
@@ -151,13 +164,13 @@ export async function GET(
       }
     }
 
-    return back(origin, {
+    return back(origin, provider, {
       connected: provider,
       accounts: String(discovered.length),
     });
   } catch (error) {
     console.error(`[connect:${provider}] failed`, error);
-    return back(origin, {
+    return back(origin, provider, {
       error: "connect_failed",
       detail: (error as Error).message.slice(0, 300),
     });

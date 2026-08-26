@@ -1,5 +1,5 @@
 import { createHmac, randomBytes } from "node:crypto";
-import { cookies } from "next/headers";
+import type { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { memberships, organizations, users } from "@/db/schema";
@@ -79,7 +79,14 @@ export async function getSession(): Promise<Session> {
  * OAuth state
  * ------------------------------------------------------------------ */
 
-const STATE_COOKIE = "pp_oauth_state";
+/**
+ * Per-provider so two flows cannot clobber each other. A single shared name
+ * meant starting a Meta connect while a LinkedIn one was still open silently
+ * destroyed the LinkedIn state.
+ */
+function stateCookieName(provider: string): string {
+  return `pp_oauth_state_${provider}`;
+}
 
 /**
  * The `state` parameter is the only thing standing between your users and a
@@ -112,22 +119,44 @@ export function verifyOAuthState(
   return safeEqual(signature, expected);
 }
 
-export async function storeOAuthState(state: string): Promise<void> {
-  const jar = await cookies();
-  jar.set(STATE_COOKIE, state, {
+/**
+ * Set the state cookie on the response itself.
+ *
+ * `cookies().set()` from next/headers does not reliably attach to a response
+ * built with NextResponse.redirect() — the redirect is a fresh object and the
+ * mutation is lost. The cookie then never reaches the browser, the callback
+ * finds nothing to compare against, and every connect attempt dies on
+ * `invalid_state` while looking like a provider-side problem.
+ */
+export function setOAuthStateCookie(
+  response: NextResponse,
+  provider: string,
+  state: string,
+): void {
+  response.cookies.set(stateCookieName(provider), state, {
     httpOnly: true,
+    // "lax" still travels on the provider's top-level redirect back to us,
+    // which is exactly the navigation the callback arrives on.
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 10 * 60,
+    // Long enough to survive a password prompt and a 2FA challenge.
+    maxAge: 15 * 60,
   });
 }
 
-export async function consumeOAuthState(): Promise<string | null> {
-  const jar = await cookies();
-  const value = jar.get(STATE_COOKIE)?.value ?? null;
-  if (value) jar.delete(STATE_COOKIE);
-  return value;
+export function readOAuthState(
+  request: NextRequest,
+  provider: string,
+): string | null {
+  return request.cookies.get(stateCookieName(provider))?.value ?? null;
+}
+
+export function clearOAuthStateCookie(
+  response: NextResponse,
+  provider: string,
+): void {
+  response.cookies.set(stateCookieName(provider), "", { path: "/", maxAge: 0 });
 }
 
 export function redirectUriFor(provider: string): string {

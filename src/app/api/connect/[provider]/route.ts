@@ -5,7 +5,7 @@ import { isProviderConfigured } from "@/lib/env";
 import {
   createOAuthState,
   redirectUriFor,
-  storeOAuthState,
+  setOAuthStateCookie,
 } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -35,9 +35,11 @@ export async function GET(
 
   const auth = providerFor(provider as Provider);
   const state = createOAuthState(provider);
-  await storeOAuthState(state);
 
-  return NextResponse.redirect(
+  // The cookie must be attached to this very response — see setOAuthStateCookie.
+  const response = NextResponse.redirect(
     auth.getAuthUrl(state, redirectUriFor(provider)),
   );
+  setOAuthStateCookie(response, provider, state);
+  return response;
 }
