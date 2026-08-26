@@ -5,6 +5,7 @@ import { getSession } from "@/lib/auth";
 import { isProviderConfigured } from "@/lib/env";
 import { isStorageConfigured } from "@/lib/storage";
 import { Composer, type AccountOption } from "@/components/composer";
+import { LogoMark } from "@/components/logo";
 import { PlatformBadge, StatusPill } from "@/components/status-pill";
 
 export const dynamic = "force-dynamic";
@@ -65,9 +66,12 @@ export default async function Dashboard({
   return (
     <main className="mx-auto grid max-w-4xl gap-8 px-6 py-10">
       {/* ---- masthead ---- */}
-      <header className="grid gap-1 border-b border-line pb-5">
+      <header className="grid gap-2 border-b border-line pb-5">
         <span className="eyebrow">{session.email}</span>
-        <h1 className="text-3xl font-bold tracking-tight">PostPilot</h1>
+        <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
+          <LogoMark size={36} />
+          PostPilot
+        </h1>
         <p className="text-sm text-muted">
           Write once, publish everywhere — now or on a schedule.
         </p>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!--
+    Favicon. Next.js App Router serves src/app/icon.svg as the tab icon
+    automatically — no <link> tag needed.
+
+    Deliberately heavier than logo-mark.svg: at 16px the thin fan strokes turn
+    to mush, so this sits on a solid ground, scales the mark up inside it, and
+    thickens every stroke. Same tilt, so the two read as the same mark.
+  -->
+  <rect width="48" height="48" rx="10.5" fill="#16212B" />
+  <g transform="translate(25.2 24) rotate(-15) scale(1.06) translate(-22.8 -24)">
+    <g fill="none" stroke="#EDF0F3" stroke-width="2.9" stroke-linecap="round">
+      <path d="M19.4 21.4C24.8 18 29.2 15.6 32.8 14.2" />
+      <path d="M20 24h12.8" />
+      <path d="M19.4 26.6C24.8 30 29.2 32.4 32.8 33.8" />
+    </g>
+    <g fill="#EDF0F3">
+      <circle cx="36.4" cy="12.9" r="3.5" />
+      <circle cx="36.4" cy="24" r="3.5" />
+      <circle cx="36.4" cy="35.1" r="3.5" />
+    </g>
+    <rect x="6" y="17.8" width="12.4" height="12.4" rx="3.7" fill="#F274B4" />
+  </g>
+</svg>
