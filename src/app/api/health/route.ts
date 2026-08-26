@@ -118,10 +118,15 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // Without this the app renders one shared workspace to anyone with the URL,
+  // so an unprotected deployment is a finding, not a detail.
+  const gated = Boolean(process.env.SITE_PASSWORD?.trim());
+
   const ok =
     missing.length === 0 &&
     database === "ok" &&
     keyBytes === 32 &&
+    gated &&
     (storage === "ok" || storage === "not_configured");
 
   const hints: string[] = [];
@@ -160,6 +165,11 @@ export async function GET(request: NextRequest) {
       "Supabase Storage did not respond as expected. Check SUPABASE_URL and that SUPABASE_SERVICE_KEY is the secret/service key, not the publishable one.",
     );
   }
+  if (!gated) {
+    hints.push(
+      "SITE_PASSWORD is not set, so anyone with this URL sees the workspace and can publish to the connected accounts. Set it and redeploy.",
+    );
+  }
   if (storage === "not_configured") {
     hints.push(
       "Storage is not configured. Text posts work; image posts to Facebook and Instagram will not.",
@@ -169,6 +179,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(
     {
       ok,
+      gated,
       database,
       storage,
       bucket: bucketName,
