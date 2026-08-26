@@ -157,7 +157,7 @@ export function Composer({ accounts }: { accounts: AccountOption[] }) {
 
   if (accounts.length === 0) {
     return (
-      <div className="rounded-md border border-line bg-surface p-6">
+      <div className="rounded border border-line bg-surface p-6">
         <p className="text-sm text-muted">
           Connect an account above and the composer will appear here.
         </p>
@@ -166,7 +166,7 @@ export function Composer({ accounts }: { accounts: AccountOption[] }) {
   }
 
   return (
-    <div className="grid gap-4 rounded-md border border-line bg-surface p-5">
+    <div className="grid gap-5 rounded border border-line bg-surface p-5">
       {/* ---- destinations ---- */}
       <div className="grid gap-2">
         <span className="eyebrow">Publish to</span>
@@ -180,13 +180,13 @@ export function Composer({ accounts }: { accounts: AccountOption[] }) {
                 type="button"
                 onClick={() => toggle(account.id)}
                 disabled={dead}
-                className={`flex items-center gap-2 rounded border px-3 py-2 text-left text-sm transition-colors ${
+                className={`flex items-center gap-2.5 rounded border px-3 py-2 text-left text-sm transition-colors ${
                   on
                     ? "border-accent bg-accent-soft text-accent"
-                    : "border-line bg-surface-2 text-ink-2 hover:border-line-strong"
-                } ${dead ? "cursor-not-allowed opacity-50" : ""}`}
+                    : "border-line bg-surface text-ink-2 hover:border-line-strong"
+                } ${dead ? "cursor-not-allowed opacity-40" : ""}`}
               >
-                <PlatformBadge platform={account.platform} />
+                <PlatformBadge platform={account.platform} size={22} />
                 <span className="grid">
                   <span className="font-medium">{account.displayName}</span>
                   {account.handle && (
@@ -207,7 +207,7 @@ export function Composer({ accounts }: { accounts: AccountOption[] }) {
           onChange={(e) => setText(e.target.value)}
           rows={6}
           placeholder="What are you sharing?"
-          className="w-full resize-y rounded border border-line bg-surface-2 p-3 text-sm leading-relaxed outline-none focus:border-accent"
+          className="field resize-y leading-relaxed"
         />
         {platforms.length > 0 && (
           <div className="flex flex-wrap gap-3">
@@ -260,7 +260,7 @@ export function Composer({ accounts }: { accounts: AccountOption[] }) {
             accept="image/*"
             multiple
             onChange={(e) => handleUpload(e.target.files)}
-            className="text-xs text-muted file:mr-2 file:rounded file:border file:border-line file:bg-surface-2 file:px-3 file:py-1.5 file:text-xs file:text-ink-2"
+            className="max-w-full text-xs text-muted file:mr-3 file:cursor-pointer file:rounded file:border file:border-line-strong file:bg-surface file:px-3 file:py-1.5 file:font-medium file:text-ink-2 hover:file:border-accent hover:file:text-accent"
           />
           {uploading && <span className="text-xs text-muted">Uploading…</span>}
         </div>
@@ -274,7 +274,7 @@ export function Composer({ accounts }: { accounts: AccountOption[] }) {
             type="datetime-local"
             value={scheduledAt}
             onChange={(e) => setScheduledAt(e.target.value)}
-            className="rounded border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
+            className="field w-auto"
           />
           <span className="text-xs text-muted">
             {scheduledAt ? timezone : "Leave empty to publish immediately"}
@@ -332,7 +332,7 @@ export function Composer({ accounts }: { accounts: AccountOption[] }) {
           type="button"
           onClick={submit}
           disabled={!canSubmit}
-          className="rounded bg-accent px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn btn-primary"
         >
           {busy
             ? "Working…"

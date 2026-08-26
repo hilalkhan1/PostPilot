@@ -54,10 +54,13 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-6 px-6 py-12">
+    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-7 px-6 py-12">
       <div className="grid gap-2">
         <LogoMark size={36} />
-        <h1 className="text-2xl font-bold tracking-tight">
+        <h1
+          className="text-2xl font-bold"
+          style={{ fontVariationSettings: '"wdth" 112' }}
+        >
           {isSignUp ? "Create your workspace" : "Sign in to PostPilot"}
         </h1>
         <p className="text-sm text-muted">
@@ -69,7 +72,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
 
       <form
         onSubmit={submit}
-        className="grid gap-4 rounded-md border border-line bg-surface p-5"
+        className="grid gap-4 rounded border border-line bg-surface p-6"
       >
         {isSignUp && (
           <div className="grid gap-1.5">
@@ -81,7 +84,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoComplete="name"
-              className="w-full rounded border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
+              className="field"
             />
           </div>
         )}
@@ -97,7 +100,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
-            className="w-full rounded border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
+            className="field"
           />
         </div>
 
@@ -112,7 +115,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete={isSignUp ? "new-password" : "current-password"}
-            className="w-full rounded border border-line bg-surface-2 px-3 py-2 text-sm outline-none focus:border-accent"
+            className="field"
           />
           {isSignUp && (
             <span className="text-xs text-muted">
@@ -130,7 +133,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         <button
           type="submit"
           disabled={busy}
-          className="rounded bg-accent px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn btn-primary mt-1"
         >
           {busy
             ? "Working…"

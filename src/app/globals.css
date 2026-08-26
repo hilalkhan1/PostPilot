@@ -1,42 +1,57 @@
 @import "tailwindcss";
 
+/*
+ * Palette: petrol-navy ink, cool blue-grey paper, chart magenta.
+ *
+ * Two magentas, not one. `--accent` is the readable text/border weight;
+ * `--accent-fill` is a deeper, less saturated version for anything filling a
+ * large area. Using the text weight for a full-width button is what makes a UI
+ * look candy-bright, and it is the single loudest thing on the page.
+ */
 :root {
-  --paper: #edf0f3;
+  --paper: #eef1f4;
   --surface: #ffffff;
-  --surface-2: #f4f7f9;
-  --ink: #16212b;
-  --ink-2: #3b4b58;
-  --muted: #67757f;
-  --line: #d2d9e0;
-  --line-strong: #b7c2ca;
-  --accent: #ab1268;
+  --surface-2: #f3f6f8;
+  --surface-3: #e8edf1;
+  --ink: #14202a;
+  --ink-2: #3a4a57;
+  --muted: #6b7a85;
+  --line: #d6dce2;
+  --line-strong: #b4bfc8;
+  --accent: #a3125f;
+  --accent-fill: #a3125f;
   --accent-soft: #fae8f2;
-  --ok: #186b47;
-  --ok-soft: #e3f1e9;
-  --warn: #8b5000;
-  --warn-soft: #faeedb;
-  --crit: #9b1b23;
-  --crit-soft: #fae6e7;
+  --on-accent: #ffffff;
+  --ok: #17663f;
+  --ok-soft: #e2f0e8;
+  --warn: #82500a;
+  --warn-soft: #f9eeda;
+  --crit: #931c24;
+  --crit-soft: #f9e6e7;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #0f1820;
-    --surface: #16212b;
-    --surface-2: #1b2732;
-    --ink: #dfe7ed;
-    --ink-2: #b4c1cb;
-    --muted: #8595a1;
-    --line: #26323d;
-    --line-strong: #374553;
-    --accent: #f274b4;
-    --accent-soft: #3a1329;
-    --ok: #5cc38c;
-    --ok-soft: #0f3225;
-    --warn: #dfa451;
-    --warn-soft: #31220c;
-    --crit: #f0808a;
-    --crit-soft: #391417;
+  :root:not([data-theme="light"]) {
+    --paper: #0e161d;
+    --surface: #15202a;
+    --surface-2: #1a2732;
+    --surface-3: #21313e;
+    --ink: #e2e9ee;
+    --ink-2: #b0bdc7;
+    --muted: #7f8f9c;
+    --line: #24313c;
+    --line-strong: #354553;
+    --accent: #f07ab5;
+    /* Deeper than --accent: large fills need weight, not brightness. */
+    --accent-fill: #a82364;
+    --accent-soft: #33122444;
+    --on-accent: #ffffff;
+    --ok: #56bc85;
+    --ok-soft: #102c20;
+    --warn: #d59b4b;
+    --warn-soft: #2c1f0c;
+    --crit: #ee7b85;
+    --crit-soft: #331316;
   }
 }
 
@@ -44,51 +59,125 @@
   --color-paper: var(--paper);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
   --color-accent: var(--accent);
+  --color-accent-fill: var(--accent-fill);
   --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
   --color-crit: var(--crit);
   --color-crit-soft: var(--crit-soft);
+
+  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
 body {
   background: var(--paper);
   color: var(--ink);
-  font-feature-settings: "cv05" 1;
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+/* Headings sit slightly expanded, which reads as deliberate at any size. */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
+  font-variation-settings: "wdth" 108;
+  letter-spacing: -0.014em;
+  text-wrap: balance;
 }
 
 .tnum {
   font-variant-numeric: tabular-nums;
 }
 
+/* Small uppercase label. Used for section eyebrows and field names. */
 .eyebrow {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 0.7rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.66rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
 
-input,
-textarea,
-select {
-  color: var(--ink);
+/*
+ * Section rule: a hairline above the heading gives the page rhythm without
+ * adding boxes. Cheaper than a card and it does not compete with the content.
+ */
+.section-rule {
+  border-top: 1px solid var(--line-strong);
 }
 
-input::placeholder,
-textarea::placeholder {
+/* One field style everywhere, so forms cannot drift apart. */
+.field {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.9rem;
+  color: var(--ink);
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+.field:hover {
+  border-color: var(--line-strong);
+}
+.field:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.field::placeholder {
   color: var(--muted);
+}
+
+.btn {
+  border-radius: 4px;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease;
+}
+.btn-primary {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+.btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent-fill) 88%, black);
+}
+.btn-primary:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+.btn-quiet {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--ink-2);
+}
+.btn-quiet:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }
