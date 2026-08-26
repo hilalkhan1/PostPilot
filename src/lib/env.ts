@@ -48,6 +48,14 @@ export const env = {
   get CRON_SECRET() {
     return required("CRON_SECRET");
   },
+  /**
+   * Signs user session cookies. Rotating it signs everyone out, which is a
+   * nuisance rather than a disaster — unlike ENCRYPTION_KEY, which would
+   * orphan every stored platform token.
+   */
+  get BETTER_AUTH_SECRET() {
+    return required("BETTER_AUTH_SECRET");
+  },
 
   // --- LinkedIn ---
   get LINKEDIN_CLIENT_ID() {

@@ -6,6 +6,7 @@ import {
   timestamp,
   integer,
   jsonb,
+  boolean,
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
@@ -68,23 +69,71 @@ export const organizations = pgTable("organizations", {
     .defaultNow(),
 });
 
-export const users = pgTable(
-  "users",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    email: text("email").notNull(),
-    name: text("name"),
-    /** External identity id (Clerk user id) once auth is swapped in. */
-    externalId: text("external_id"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-  },
-  (t) => [
-    uniqueIndex("users_email_idx").on(t.email),
-    uniqueIndex("users_external_id_idx").on(t.externalId),
-  ],
-);
+/* ------------------------------------------------------------------ *
+ * Identity — owned by better-auth
+ *
+ * These four tables are better-auth's, and their names and columns are fixed
+ * by it. They are declared here rather than in a separate file so drizzle-kit
+ * pushes one schema and the foreign keys below can reference them directly.
+ * Do not add app columns to `users`; app-level data belongs on the org.
+ * ------------------------------------------------------------------ */
+
+export const users = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  image: text("image"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const sessions = pgTable("session", {
+  id: text("id").primaryKey(),
+  expiresAt: timestamp("expires_at").notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+});
+
+/**
+ * Holds the password hash for email sign-in, and would hold provider tokens if
+ * social sign-in is added later. Unrelated to `platform_connections`, which is
+ * about publishing rather than identity.
+ */
+export const accounts = pgTable("account", {
+  id: text("id").primaryKey(),
+  accountId: text("account_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  idToken: text("id_token"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at"),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+  scope: text("scope"),
+  password: text("password"),
+  /** Added by better-auth 1.7 for OIDC providers; unused by email sign-in. */
+  issuer: text("issuer"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const verifications = pgTable("verification", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
 
 export const memberships = pgTable(
   "memberships",
@@ -93,7 +142,7 @@ export const memberships = pgTable(
     orgId: uuid("org_id")
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
-    userId: uuid("user_id")
+    userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     role: text("role").notNull().default("owner"),
@@ -263,7 +312,7 @@ export const posts = pgTable(
     orgId: uuid("org_id")
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
-    createdBy: uuid("created_by").references(() => users.id, {
+    createdBy: text("created_by").references(() => users.id, {
       onDelete: "set null",
     }),
 

@@ -12,6 +12,9 @@ const MAX_BYTES = 25 * 1024 * 1024;
 
 export async function GET() {
   const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  }
   const assets = await db
     .select()
     .from(mediaAssets)
@@ -34,6 +37,9 @@ export async function POST(request: NextRequest) {
   }
 
   const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  }
   const form = await request.formData();
   const file = form.get("file");
   const altText = (form.get("altText") as string | null) ?? null;

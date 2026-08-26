@@ -40,6 +40,9 @@ const CreatePost = z.object({
 
 export async function GET() {
   const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  }
 
   const rows = await db
     .select()
@@ -82,6 +85,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  }
 
   const parsed = CreatePost.safeParse(await request.json());
   if (!parsed.success) {

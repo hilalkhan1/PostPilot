@@ -1,12 +1,13 @@
 import { desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { platformConnections, postTargets, posts, socialAccounts } from "@/db/schema";
-import { getSession } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
 import { isProviderConfigured } from "@/lib/env";
 import { isStorageConfigured } from "@/lib/storage";
 import { Composer, type AccountOption } from "@/components/composer";
 import { LogoMark } from "@/components/logo";
 import { PlatformBadge, StatusPill } from "@/components/status-pill";
+import { SignOutButton } from "@/components/sign-out";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export default async function Dashboard({
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const params = await searchParams;
-  const session = await getSession();
+  const session = await requireSession();
 
   const accounts = await db
     .select()
@@ -67,7 +68,10 @@ export default async function Dashboard({
     <main className="mx-auto grid max-w-4xl gap-8 px-6 py-10">
       {/* ---- masthead ---- */}
       <header className="grid gap-2 border-b border-line pb-5">
-        <span className="eyebrow">{session.email}</span>
+        <div className="flex items-center justify-between gap-3">
+          <span className="eyebrow">{session.email}</span>
+          <SignOutButton />
+        </div>
         <h1 className="flex items-center gap-2.5 text-3xl font-bold tracking-tight">
           <LogoMark size={36} />
           PostPilot

@@ -69,6 +69,9 @@ export async function GET(
 
   try {
     const session = await getSession();
+    if (!session) {
+      return back(origin, provider, { error: "not_signed_in" });
+    }
     const auth = providerFor(provider as Provider);
     const grant = await auth.exchangeCode(code, redirectUriFor(provider));
 

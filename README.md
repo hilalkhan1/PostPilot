@@ -153,7 +153,9 @@ src/
   lib/
     dispatcher.ts    claim, advance one step, persist, back off
     crypto.ts        AES-256-GCM envelope for tokens
-    auth.ts          session seam — swap for Clerk here
+    auth-server.ts   better-auth: real accounts, email + password
+    auth.ts          maps the signed-in user to their workspace; OAuth state
+    gate.ts          shared-password lock over the whole deployment
     storage.ts       Supabase uploads + image dimension probing
   app/api/
     cron/tick/       the publisher
@@ -172,8 +174,9 @@ next one — same Meta app, same container flow as Instagram.
 
 ## Known gaps
 
-- **Auth is a dev stub.** `getSession()` signs into a single workspace
-  automatically. Swap it for Clerk before anyone else uses this.
+- **No email verification or password reset.** better-auth handles both, but
+  neither is wired up because no mail provider is configured. Until one is,
+  a forgotten password means editing the database.
 - **Images only.** No video, so no Reels and no TikTok.
 - **No reconciliation step.** After an ambiguous failure the dispatcher retries.
   Instagram is protected by its stored container id; Facebook and LinkedIn are
