@@ -2,7 +2,7 @@ import { createHmac, randomBytes } from "node:crypto";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import type { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { memberships, organizations } from "@/db/schema";
 import { auth } from "./auth-server";
@@ -60,19 +60,39 @@ export async function getSession(): Promise<Session | null> {
    * Done here rather than in a sign-up hook so a user created by any route —
    * a future invite, a social provider, a seed script — still lands in a
    * workspace instead of a half-state with no org.
+   *
+   * Under an advisory lock because the browser fires several requests at once
+   * on first load (page, favicon, a fetch), and without it each one finds no
+   * membership and creates its own workspace. The unique index on
+   * (org_id, user_id) does not help: the rows differ, the orgs are what
+   * duplicate. The lock is transaction-scoped and released automatically.
    */
-  const [org] = await db
-    .insert(organizations)
-    .values({ name: `${user.name || user.email}'s workspace` })
-    .returning();
+  const orgId = await db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${user.id}))`);
 
-  await db
-    .insert(memberships)
-    .values({ orgId: org.id, userId: user.id, role: "owner" });
+    // Re-check inside the lock — a racing request may have just created it.
+    const [raced] = await tx
+      .select({ orgId: memberships.orgId })
+      .from(memberships)
+      .where(eq(memberships.userId, user.id))
+      .limit(1);
+    if (raced) return raced.orgId;
+
+    const [org] = await tx
+      .insert(organizations)
+      .values({ name: `${user.name || user.email}'s workspace` })
+      .returning();
+
+    await tx
+      .insert(memberships)
+      .values({ orgId: org.id, userId: user.id, role: "owner" });
+
+    return org.id;
+  });
 
   return {
     userId: user.id,
-    orgId: org.id,
+    orgId,
     email: user.email,
     name: user.name,
   };
