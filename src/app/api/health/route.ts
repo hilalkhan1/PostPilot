@@ -72,8 +72,57 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  /*
+   * Storage gets its own probe because "configured" and "working" are different
+   * things here: the keys can be perfectly valid and the bucket still missing,
+   * and the only symptom is an image post failing at publish time. Meta fetches
+   * media anonymously over the internet, so the check has to prove the bucket
+   * exists AND that a stranger can read from it.
+   */
+  let storage:
+    | "ok"
+    | "no_bucket"
+    | "not_public"
+    | "unreachable"
+    | "not_configured" = "not_configured";
+  let bucketName: string | null = null;
+
+  // NB: the local `env` above is a map of booleans for the report — read the
+  // actual values from process.env, not from it.
+  const supabaseUrl = process.env.SUPABASE_URL?.trim();
+  const supabaseKey = process.env.SUPABASE_SERVICE_KEY?.trim();
+
+  if (supabaseUrl && supabaseKey) {
+    bucketName = process.env.SUPABASE_BUCKET?.trim() || "media";
+    try {
+      const response = await fetch(
+        `${supabaseUrl}/storage/v1/bucket/${bucketName}`,
+        {
+          headers: {
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+          },
+        },
+      );
+
+      if (response.status === 404 || response.status === 400) {
+        storage = "no_bucket";
+      } else if (!response.ok) {
+        storage = "unreachable";
+      } else {
+        const bucket = (await response.json()) as { public?: boolean };
+        storage = bucket.public ? "ok" : "not_public";
+      }
+    } catch {
+      storage = "unreachable";
+    }
+  }
+
   const ok =
-    missing.length === 0 && database === "ok" && keyBytes === 32;
+    missing.length === 0 &&
+    database === "ok" &&
+    keyBytes === 32 &&
+    (storage === "ok" || storage === "not_configured");
 
   const hints: string[] = [];
   if (missing.length > 0) {
@@ -96,11 +145,33 @@ export async function GET(request: NextRequest) {
       "Could not connect. Check you used Neon's POOLED connection string (the host contains -pooler) and that it ends with ?sslmode=require.",
     );
   }
+  if (storage === "no_bucket") {
+    hints.push(
+      `Supabase has no bucket named "${bucketName}". Create it under Storage → New bucket, with Public bucket ON — and check it is in the same project as SUPABASE_URL. Facebook and Instagram fetch images over the internet, so image posts fail without it.`,
+    );
+  }
+  if (storage === "not_public") {
+    hints.push(
+      `The "${bucketName}" bucket exists but is private. Meta fetches media anonymously, so image posts will fail. Make it public under Storage → Buckets → ${bucketName} → Settings.`,
+    );
+  }
+  if (storage === "unreachable") {
+    hints.push(
+      "Supabase Storage did not respond as expected. Check SUPABASE_URL and that SUPABASE_SERVICE_KEY is the secret/service key, not the publishable one.",
+    );
+  }
+  if (storage === "not_configured") {
+    hints.push(
+      "Storage is not configured. Text posts work; image posts to Facebook and Instagram will not.",
+    );
+  }
 
   return NextResponse.json(
     {
       ok,
       database,
+      storage,
+      bucket: bucketName,
       encryptionKeyBytes: keyBytes,
       env,
       hints,
