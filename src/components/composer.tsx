@@ -63,8 +63,23 @@ export function Composer({ accounts }: { accounts: AccountOption[] }) {
       .map((i) => ({ platform: c.platform, message: i.message })),
   );
 
-  const canSubmit =
-    selected.length > 0 && errors.length === 0 && !busy && !uploading;
+  /*
+   * Why the button is disabled, in the order the user can act on it.
+   *
+   * Validation only runs over the *selected* platforms, so with nothing
+   * selected there are no errors to report and the button sat greyed out with
+   * no explanation at all. A disabled control that does not say why is a bug,
+   * not a safeguard.
+   */
+  const blockedReason = uploading
+    ? "Waiting for the image to finish uploading."
+    : selected.length === 0
+      ? "Pick at least one account above."
+      : errors.length > 0
+        ? `Fix ${errors.length} issue${errors.length === 1 ? "" : "s"} first.`
+        : null;
+
+  const canSubmit = blockedReason === null && !busy;
 
   function toggle(id: string) {
     setSelected((prev) =>
@@ -323,12 +338,12 @@ export function Composer({ accounts }: { accounts: AccountOption[] }) {
             ? "Working…"
             : scheduledAt
               ? "Schedule"
-              : `Publish to ${selected.length || 0}`}
+              : selected.length === 0
+                ? "Publish"
+                : `Publish to ${selected.length} account${selected.length === 1 ? "" : "s"}`}
         </button>
-        {errors.length > 0 && (
-          <span className="text-xs text-muted">
-            Fix {errors.length} issue{errors.length === 1 ? "" : "s"} first.
-          </span>
+        {blockedReason && (
+          <span className="text-xs text-muted">{blockedReason}</span>
         )}
       </div>
     </div>
