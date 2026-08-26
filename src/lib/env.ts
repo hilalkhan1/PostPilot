@@ -64,6 +64,18 @@ export const env = {
   get META_APP_SECRET() {
     return optional("META_APP_SECRET");
   },
+  /**
+   * Facebook Login for Business login-configuration id.
+   *
+   * Login for Business does not take a `scope` list — the permissions live in a
+   * configuration created in the app dashboard, and the dialog receives its id
+   * instead. Sending `scope` to a Login-for-Business app fails with a
+   * "domain of this URL isn't included in the app's domains" error that has
+   * nothing to do with domains.
+   */
+  get META_CONFIG_ID() {
+    return optional("META_CONFIG_ID");
+  },
   get META_API_VERSION() {
     return withDefault("META_API_VERSION", "v21.0");
   },

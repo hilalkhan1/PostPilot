@@ -53,13 +53,23 @@ export const metaAuth: ProviderAuth = {
         "META_APP_ID is not set. Add it to .env.local before connecting Meta.",
       );
     }
+
     const params = new URLSearchParams({
       client_id: env.META_APP_ID,
       redirect_uri: redirectUri,
       state,
       response_type: "code",
-      scope: SCOPES.join(","),
     });
+
+    if (env.META_CONFIG_ID) {
+      // Facebook Login for Business: the configuration holds the permissions,
+      // so the dialog takes its id and must NOT also receive a scope list.
+      params.set("config_id", env.META_CONFIG_ID);
+    } else {
+      // Classic Facebook Login.
+      params.set("scope", SCOPES.join(","));
+    }
+
     return `https://www.facebook.com/${env.META_API_VERSION}/dialog/oauth?${params}`;
   },
 
